@@ -1,35 +1,11 @@
-import React, {
-  createContext,
-  Dispatch,
-  useContext,
-  useReducer,
-  useRef,
-} from "react";
-
-export interface Item {
-  id: number;
-  task: string;
-  complete: boolean;
-}
-
-export type state = Item;
-
-export type Action =
-  | { type: "ADD"; todo: Item }
-  | { type: "UPDATE"; id: number; todo: Item }
-  | { type: "REMOVE"; id: number };
-
-type NextId = {
-  current: number;
-};
-
-type TodoDispatch = Dispatch<Action>;
+import React, { createContext, useReducer, useRef } from "react";
+import { Action, Item, NextId, TodoDispatch } from "../types";
 
 const todos: Item[] = [
   {
     id: 0,
     task: "test task",
-    complete: false,
+    complete: true,
   },
   {
     id: 1,
@@ -53,16 +29,30 @@ const reducer = function (state: Item[], action: Action) {
   }
 };
 
-const NextIdContext = createContext<NextId | null>(null);
-const TodoStateContext = createContext<Item[]>([]);
-const TodoDispatchContext = createContext<TodoDispatch | null>(null);
+export const NextIdContext = createContext<NextId>({ current: latestNextId });
+export const TodoStateContext = createContext<Item[]>([]);
+export const TodoDispatchContext = createContext<TodoDispatch>(() => {});
 
 function TodoProvider({ children }: React.PropsWithChildren) {
   const [todoItems, dispatch] = useReducer(reducer, todos);
   const nextId = useRef(latestNextId);
+
   return (
     <NextIdContext.Provider value={nextId}>
-      <TodoDispatchContext.Provider value={dispatch}>
+      <TodoDispatchContext.Provider
+        value={{
+          dispatch,
+          find(id: number) {
+            return todoItems.find((item) => item.id === id);
+          },
+          findAndUpdate(id: number) {
+            const item = todoItems.find((item) => item.id === id);
+            if (item) {
+              item.complete = !item.complete;
+            }
+            return item;
+          },
+        }}>
         <TodoStateContext.Provider value={todoItems}>
           {children}
         </TodoStateContext.Provider>
@@ -70,17 +60,5 @@ function TodoProvider({ children }: React.PropsWithChildren) {
     </NextIdContext.Provider>
   );
 }
-
-export const useNextId = function () {
-  return useContext(NextIdContext);
-};
-
-export const useTodo = function () {
-  return useContext(TodoStateContext);
-};
-
-export const useTodoDispatch = function () {
-  return useContext(TodoDispatchContext);
-};
 
 export default TodoProvider;

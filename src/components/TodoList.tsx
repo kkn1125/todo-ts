@@ -1,6 +1,6 @@
 import React from "react";
+import { Item } from "../types";
 import TodoItem from "./TodoItem";
-import { Item } from "./TodoProvider";
 
 type Props = {
   todoList: Item[];
@@ -10,7 +10,7 @@ function TodoList({ todoList }: Props) {
   return (
     <ul>
       {todoList.map((item: Item) => (
-        <TodoItem todo={item} />
+        <TodoItem key={item.id + item.task} todo={item} />
       ))}
     </ul>
   );
